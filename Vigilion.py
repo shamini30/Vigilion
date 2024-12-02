@@ -7,6 +7,16 @@ from googletrans import Translator
 import os
 import tempfile
 
+# Custom CSS to change the background color
+st.markdown("""
+    <style>
+        /* Change background color of the entire app */
+        body {
+            background-color: #c1bfff !important;  /* Light purple */
+        }
+    </style>
+""", unsafe_allow_html=True)
+
 # Load the model and processor
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 caption_generation_model = BlipForConditionalGeneration.from_pretrained("Salesforce/blip-image-captioning-base").to(device)
