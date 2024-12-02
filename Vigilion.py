@@ -30,7 +30,7 @@ def generate_audio(caption, language='en'):
 # Streamlit interface
 st.title("Vigilion: Your Personal Smart Vision Assistant")
 st.write("Let us be your eye and guide you!")
-st.write("Note: Help your loved one login and get ready with the app before they navigate on their own")
+
 # Language selection
 languages = {
     'English': 'en',
