@@ -7,16 +7,6 @@ from googletrans import Translator
 import os
 import tempfile
 
-# Custom CSS to change the background color
-st.markdown("""
-    <style>
-        /* Change background color of the entire app */
-        body {
-            background-color: #c1bfff !important;  /* Light purple */
-        }
-    </style>
-""", unsafe_allow_html=True)
-
 # Load the model and processor
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 caption_generation_model = BlipForConditionalGeneration.from_pretrained("Salesforce/blip-image-captioning-base").to(device)
@@ -39,8 +29,8 @@ def generate_audio(caption, language='en'):
 
 # Streamlit interface
 st.title("Vigilion: Your Personal Smart Vision Assistant")
-st.write("Upload an image to hear the description:")
-
+st.write("Let us be your eye and guide you!")
+st.write("Note: Help your loved one login and get ready with the app before they navigate on their own")
 # Language selection
 languages = {
     'English': 'en',
@@ -56,10 +46,10 @@ languages = {
 }
 
 # User selects language
-language = st.selectbox("Select Language for Audio", list(languages.keys()))
+language = st.selectbox("Select your language:", list(languages.keys()))
 
 # Upload image
-uploaded_image = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
+uploaded_image = st.file_uploader("Upload an image:", type=["jpg", "jpeg", "png"])
 
 if uploaded_image is not None:
     image = Image.open(uploaded_image)
