@@ -8,7 +8,7 @@ import os
 import tempfile
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model_name = "shamini30/VigilionApp"
+model_path = "shamini30/VigilionApp/fine_tuned_clip_epoch_3"
 
 # Load the fine-tuned CLIP model and processor
 try:
