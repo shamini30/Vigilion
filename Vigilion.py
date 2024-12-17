@@ -9,9 +9,13 @@ import tempfile
 
 # Load the fine-tuned CLIP model and processor
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model_path = "/content/fine_tuned_clip_epoch_10"  # Updated path to your saved model
+model_path = r"C:\Users\shamini\Downloads\fine_tuned_clip_epoch_10-20241217T070722Z-001"  # Updated to local Windows path
 
-# Load the model and processor from the specified path
+# Check if the model path exists
+if not os.path.exists(model_path):
+    st.error(f"Model path '{model_path}' does not exist. Please check the path.")
+
+# Load the model and processor from the specified local path
 caption_generation_model = CLIPModel.from_pretrained(model_path).to(device)
 processor = CLIPProcessor.from_pretrained(model_path)
 
@@ -20,11 +24,10 @@ def generate_caption(image):
     inputs = processor(images=image, return_tensors="pt").to(device)
     with torch.no_grad():
         outputs = caption_generation_model(**inputs)
-        logits_per_image = outputs.logits_per_image
         logits_per_text = outputs.logits_per_text
 
         # Decode the generated caption (select the most probable text tokens)
-        caption = processor.decode(logits_per_text[0], skip_special_tokens=True)
+        caption = processor.tokenizer.decode(logits_per_text[0].argmax(dim=-1), skip_special_tokens=True)
     return caption
 
 # Function to generate and play audio
@@ -79,5 +82,3 @@ if uploaded_image is not None:
 
     # Clean up temporary files after use
     os.remove(audio_file)
-
-
