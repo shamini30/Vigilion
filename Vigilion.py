@@ -1,5 +1,5 @@
 import streamlit as st
-from transformers import BlipProcessor, BlipForConditionalGeneration
+from transformers import CLIPModel, CLIPProcessor
 from PIL import Image
 import torch
 from gtts import gTTS
@@ -7,22 +7,27 @@ from googletrans import Translator
 import os
 import tempfile
 
-# Load the model and processor
+# Load the fine-tuned CLIP model and processor
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-caption_generation_model = BlipForConditionalGeneration.from_pretrained("Salesforce/blip-image-captioning-base").to(device)
-processor = BlipProcessor.from_pretrained("Salesforce/blip-image-captioning-base")
+model_path = "models/fine_tuned_clip_epoch_10"  # Path to your saved model
+caption_generation_model = CLIPModel.from_pretrained(model_path).to(device)
+processor = CLIPProcessor.from_pretrained(model_path)
 
 # Define the function to generate captions
 def generate_caption(image):
     inputs = processor(images=image, return_tensors="pt").to(device)
-    generated_ids = caption_generation_model.generate(**inputs, num_beams=5)
-    caption = processor.decode(generated_ids[0], skip_special_tokens=True)
+    with torch.no_grad():
+        outputs = caption_generation_model(**inputs)
+        logits_per_image = outputs.logits_per_image
+        logits_per_text = outputs.logits_per_text
+
+        # Decode the generated caption (select the most probable text tokens)
+        caption = processor.decode(logits_per_text[0], skip_special_tokens=True)
     return caption
 
 # Function to generate and play audio
 def generate_audio(caption, language='en'):
     tts = gTTS(text=caption, lang=language, slow=False)
-    # Create a temporary file to save the audio
     with tempfile.NamedTemporaryFile(delete=False) as tmp_audio_file:
         tts.save(tmp_audio_file.name)
         return tmp_audio_file.name
@@ -55,20 +60,21 @@ if uploaded_image is not None:
     image = Image.open(uploaded_image)
     st.image(image, caption="Uploaded Image.", use_column_width=True)
 
-    # Generate caption
+    # Generate a caption using the fine-tuned CLIP model
     caption = generate_caption(image)
-    st.subheader("There is:")
+    st.subheader("Caption Generated:")
     st.write(caption)
-    
+
     # Translate the caption
     translator = Translator()
     translated_caption = translator.translate(caption, dest=languages[language]).text
-    
+
     # Generate audio in the selected language
     audio_file = generate_audio(translated_caption, languages[language])
-    
+
     # Play the audio file
     st.audio(audio_file, format="audio/mp3")
-    
-    # Optionally delete the temporary audio file after use
+
+    # Clean up temporary files after use
     os.remove(audio_file)
+
