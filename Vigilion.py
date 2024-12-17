@@ -11,7 +11,7 @@ import tempfile
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Define the model path
-model_path = "shamini30/VigilionApp"
+model_path = "SalesModel/BLIP"
 
 
 # Clear CUDA cache
