@@ -9,7 +9,7 @@ import tempfile
 
 # Load the fine-tuned CLIP model and processor
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model_path = r"C:\fine_tuned_clip_epoch_10-20241217T070722Z-001\fine_tuned_clip_epoch_10"# Updated to local Windows path
+model_path = "fine_tuned_clip_epoch_3-20241217T082547Z-001/fine_tuned_clip_epoch_3"
 
 # Check if the model path exists
 if not os.path.exists(model_path):
