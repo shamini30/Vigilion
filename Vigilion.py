@@ -9,7 +9,9 @@ import tempfile
 
 # Load the fine-tuned CLIP model and processor
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model_path = "models/fine_tuned_clip_epoch_10"  # Path to your saved model
+model_path = "/content/fine_tuned_clip_epoch_10"  # Updated path to your saved model
+
+# Load the model and processor from the specified path
 caption_generation_model = CLIPModel.from_pretrained(model_path).to(device)
 processor = CLIPProcessor.from_pretrained(model_path)
 
@@ -77,4 +79,5 @@ if uploaded_image is not None:
 
     # Clean up temporary files after use
     os.remove(audio_file)
+
 
