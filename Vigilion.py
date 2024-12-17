@@ -11,13 +11,14 @@ import tempfile
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model_name = "shamini30/VigilionApp"
 
+
 # Check if the model path exists
 if not os.path.exists(model_path):
     st.error(f"Model path '{model_path}' does not exist. Please check the path.")
 
 # Load the model and processor from the specified local path
-caption_generation_model = CLIPModel.from_pretrained(model_path).to(device)
-processor = CLIPProcessor.from_pretrained(model_path)
+model = CLIPModel.from_pretrained(model_name)
+processor = CLIPProcessor.from_pretrained(model_name)
 
 # Define the function to generate captions
 def generate_caption(image):
