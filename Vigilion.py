@@ -1,5 +1,5 @@
 import streamlit as st
-from transformers import CLIPModel, CLIPProcessor
+from transformers import BlipProcessor, BlipForConditionalGeneration
 from PIL import Image
 import torch
 from gtts import gTTS
@@ -7,47 +7,46 @@ from googletrans import Translator
 import os
 import tempfile
 
-# Define device for CUDA or CPU
+# Initialize device (use GPU if available)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-model_path = "SalesModel/BLIP/model.pth"
-
-# Clear CUDA cache
-torch.cuda.empty_cache()
-
-# Load the fine-tuned CLIP model and processor
+# --- Load BLIP Model ---
 try:
-    model = CLIPModel.from_pretrained(model_path, safetensors=True).to(device)
-    processor = CLIPProcessor.from_pretrained(model_path)
+    processor = BlipProcessor.from_pretrained("Salesforce/blip-image-captioning-base")
+    model = BlipForConditionalGeneration.from_pretrained("Salesforce/blip-image-captioning-base").to(device)
+    model.eval()
 except Exception as e:
-    st.error(f"Failed to load the model: {str(e)}")
+    st.error(f"Failed to load the BLIP model: {str(e)}")
     st.stop()
 
-# Function to generate captions
+# --- Caption Generation Function ---
 def generate_caption(image):
     try:
+        # Preprocess the image for BLIP
         inputs = processor(images=image, return_tensors="pt").to(device)
-        with torch.no_grad():
-            outputs = model(**inputs)
-            logits_per_text = outputs.logits_per_text
-            caption = processor.tokenizer.decode(logits_per_text[0].argmax(dim=-1), skip_special_tokens=True)
+        generated_ids = model.generate(**inputs, num_beams=5)  # Beam search for better results
+        caption = processor.tokenizer.decode(generated_ids[0], skip_special_tokens=True)
         return caption
     except Exception as e:
-        st.error(f"Failed to generate captions: {str(e)}")
-        return "Caption generation failed."
+        st.error(f"Error during caption generation: {e}")
+        return None
 
-# Function to generate and play audio
+# --- Generate Audio Function ---
 def generate_audio(caption, language='en'):
-    tts = gTTS(text=caption, lang=language, slow=False)
-    with tempfile.NamedTemporaryFile(delete=False) as tmp_audio_file:
-        tts.save(tmp_audio_file.name)
-        return tmp_audio_file.name
+    try:
+        tts = gTTS(text=caption, lang=language, slow=False)
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as tmp_audio_file:
+            tts.save(tmp_audio_file.name)
+            return tmp_audio_file.name
+    except Exception as e:
+        st.error(f"Error generating audio: {e}")
+        return None
 
-# Streamlit Interface
+# --- Streamlit Interface ---
 st.title("Vigilion: Your Personal Smart Vision Assistant")
 st.write("Let us guide you with smart visual capabilities.")
 
-# Language selection
+# Language Selection
 languages = {
     'English': 'en',
     'Hindi': 'hi',
@@ -60,27 +59,34 @@ languages = {
     'Malayalam': 'ml',
     'Kannada': 'kn'
 }
-
-# User selects a language
 language = st.selectbox("Choose Language", list(languages.keys()))
 
-# Upload an image
-uploaded_image = st.file_uploader("Upload an image", ["jpg", "jpeg", "png"])
+# Image Upload
+uploaded_image = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
 
 if uploaded_image:
+    # Load the image using PIL
     img = Image.open(uploaded_image)
-    st.image(img)
 
-    # Generate a caption using the fine-tuned CLIP model
+    # Ensure the image is in RGB format
+    if img.mode != "RGB":
+        img = img.convert("RGB")
+
+    st.image(img, caption="Uploaded Image", use_column_width=True)
+
+    # Generate caption
     caption = generate_caption(img)
-    st.write("Generated Caption:", caption)
+    if caption:
+        st.write("Generated Caption:", caption)
 
-    # Translate the caption
-    translator = Translator()
-    translated_caption = translator.translate(caption, dest=languages[language]).text
+        # Translate the caption
+        translator = Translator()
+        translated_caption = translator.translate(caption, dest=languages[language]).text
+        st.write("Translated Caption:", translated_caption)
 
-    # Generate and play audio in the selected language
-    audio_file = generate_audio(translated_caption)
-
-    if os.path.exists(audio_file):
-        st.audio(audio_file)
+        # Generate and play audio
+        audio_file = generate_audio(translated_caption, language=languages[language])
+        if audio_file:
+            st.audio(audio_file)
+    else:
+        st.error("Caption generation failed.")
