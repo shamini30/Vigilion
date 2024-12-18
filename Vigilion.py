@@ -10,9 +10,7 @@ import tempfile
 # Define device for CUDA or CPU
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# Define the model path
-model_path = "SalesModel/BLIP"
-
+model_path = "SalesModel/BLIP/model.pth"
 
 # Clear CUDA cache
 torch.cuda.empty_cache()
